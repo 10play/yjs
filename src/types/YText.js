@@ -186,6 +186,10 @@ const insertNegatedAttributes = (
   currPos,
   negatedAttributes
 ) => {
+  console.log(
+    "negatedAttributes - insertNegatedAttributes - before",
+    negatedAttributes
+  );
   // check if we really need to remove attributes
   while (
     currPos.right !== null &&
@@ -205,6 +209,10 @@ const insertNegatedAttributes = (
     }
     currPos.forward();
   }
+  console.log(
+    "negatedAttributes - insertNegatedAttributes - after",
+    negatedAttributes
+  );
   const doc = transaction.doc;
   const ownClientId = doc.clientID;
   negatedAttributes.forEach((val, key) => {
