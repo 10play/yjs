@@ -6439,6 +6439,7 @@ const insertText = (transaction, parent, currPos, text, attributes) => {
  * @function
  */
 const formatText = (transaction, parent, currPos, length, attributes) => {
+  console.log("Test");
   const doc = transaction.doc;
   const ownClientId = doc.clientID;
   minimizeAttributeChanges(currPos, attributes);
