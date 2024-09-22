@@ -9771,7 +9771,13 @@
    * @param {any} b
    * @return {boolean}
    */
-  const equalAttrs = (a, b) => a === b || (typeof a === 'object' && typeof b === 'object' && a && b && equalFlat(a, b));
+  const equalAttrs = (a, b) =>
+    a === b ||
+    (typeof a === "object" &&
+      typeof b === "object" &&
+      a &&
+      b &&
+      equalFlat(a, b));
 
   class ItemTextListPosition {
     /**
@@ -9780,7 +9786,7 @@
      * @param {number} index
      * @param {Map<string,any>} currentAttributes
      */
-    constructor (left, right, index, currentAttributes) {
+    constructor(left, right, index, currentAttributes) {
       this.left = left;
       this.right = right;
       this.index = index;
@@ -9790,21 +9796,24 @@
     /**
      * Only call this if you know that this.right is defined
      */
-    forward () {
+    forward() {
       if (this.right === null) {
         unexpectedCase();
       }
       switch (this.right.content.constructor) {
         case ContentFormat:
           if (!this.right.deleted) {
-            updateCurrentAttributes(this.currentAttributes, /** @type {ContentFormat} */ (this.right.content));
+            updateCurrentAttributes(
+              this.currentAttributes,
+              /** @type {ContentFormat} */ (this.right.content)
+            );
           }
-          break
+          break;
         default:
           if (!this.right.deleted) {
             this.index += this.right.length;
           }
-          break
+          break;
       }
       this.left = this.right;
       this.right = this.right.right;
@@ -9825,25 +9834,31 @@
       switch (pos.right.content.constructor) {
         case ContentFormat:
           if (!pos.right.deleted) {
-            updateCurrentAttributes(pos.currentAttributes, /** @type {ContentFormat} */ (pos.right.content));
+            updateCurrentAttributes(
+              pos.currentAttributes,
+              /** @type {ContentFormat} */ (pos.right.content)
+            );
           }
-          break
+          break;
         default:
           if (!pos.right.deleted) {
             if (count < pos.right.length) {
               // split right
-              getItemCleanStart(transaction, createID(pos.right.id.client, pos.right.id.clock + count));
+              getItemCleanStart(
+                transaction,
+                createID(pos.right.id.client, pos.right.id.clock + count)
+              );
             }
             pos.index += pos.right.length;
             count -= pos.right.length;
           }
-          break
+          break;
       }
       pos.left = pos.right;
       pos.right = pos.right.right;
       // pos.forward() - we don't forward because that would halve the performance because we already do the checks above
     }
-    return pos
+    return pos;
   };
 
   /**
@@ -9860,11 +9875,21 @@
     const currentAttributes = new Map();
     const marker = useSearchMarker ? findMarker(parent, index) : null;
     if (marker) {
-      const pos = new ItemTextListPosition(marker.p.left, marker.p, marker.index, currentAttributes);
-      return findNextPosition(transaction, pos, index - marker.index)
+      const pos = new ItemTextListPosition(
+        marker.p.left,
+        marker.p,
+        marker.index,
+        currentAttributes
+      );
+      return findNextPosition(transaction, pos, index - marker.index);
     } else {
-      const pos = new ItemTextListPosition(null, parent._start, 0, currentAttributes);
-      return findNextPosition(transaction, pos, index)
+      const pos = new ItemTextListPosition(
+        null,
+        parent._start,
+        0,
+        currentAttributes
+      );
+      return findNextPosition(transaction, pos, index);
     }
   };
 
@@ -9879,18 +9904,28 @@
    * @private
    * @function
    */
-  const insertNegatedAttributes = (transaction, parent, currPos, negatedAttributes) => {
+  const insertNegatedAttributes = (
+    transaction,
+    parent,
+    currPos,
+    negatedAttributes
+  ) => {
     // check if we really need to remove attributes
     while (
-      currPos.right !== null && (
-        currPos.right.deleted === true || (
-          currPos.right.content.constructor === ContentFormat &&
-          equalAttrs(negatedAttributes.get(/** @type {ContentFormat} */ (currPos.right.content).key), /** @type {ContentFormat} */ (currPos.right.content).value)
-        )
-      )
+      currPos.right !== null &&
+      (currPos.right.deleted === true ||
+        (currPos.right.content.constructor === ContentFormat &&
+          equalAttrs(
+            negatedAttributes.get(
+              /** @type {ContentFormat} */ (currPos.right.content).key
+            ),
+            /** @type {ContentFormat} */ (currPos.right.content).value
+          )))
     ) {
       if (!currPos.right.deleted) {
-        negatedAttributes.delete(/** @type {ContentFormat} */ (currPos.right.content).key);
+        negatedAttributes.delete(
+          /** @type {ContentFormat} */ (currPos.right.content).key
+        );
       }
       currPos.forward();
     }
@@ -9899,7 +9934,16 @@
     negatedAttributes.forEach((val, key) => {
       const left = currPos.left;
       const right = currPos.right;
-      const nextFormat = new Item(createID(ownClientId, getState(doc.store, ownClientId)), left, left && left.lastId, right, right && right.id, parent, null, new ContentFormat(key, val));
+      const nextFormat = new Item(
+        createID(ownClientId, getState(doc.store, ownClientId)),
+        left,
+        left && left.lastId,
+        right,
+        right && right.id,
+        parent,
+        null,
+        new ContentFormat(key, val)
+      );
       nextFormat.integrate(transaction, 0);
       currPos.right = nextFormat;
       currPos.forward();
@@ -9933,9 +9977,18 @@
     // go right while attributes[right.key] === right.value (or right is deleted)
     while (true) {
       if (currPos.right === null) {
-        break
-      } else if (currPos.right.deleted || (currPos.right.content.constructor === ContentFormat && equalAttrs(attributes[(/** @type {ContentFormat} */ (currPos.right.content)).key] ?? null, /** @type {ContentFormat} */ (currPos.right.content).value))) ; else {
-        break
+        break;
+      } else if (
+        currPos.right.deleted ||
+        (currPos.right.content.constructor === ContentFormat &&
+          equalAttrs(
+            attributes[
+              /** @type {ContentFormat} */ (currPos.right.content).key
+            ] ?? null,
+            /** @type {ContentFormat} */ (currPos.right.content).value
+          ))
+      ) ; else {
+        break;
       }
       currPos.forward();
     }
@@ -9963,12 +10016,21 @@
         // save negated attribute (set null if currentVal undefined)
         negatedAttributes.set(key, currentVal);
         const { left, right } = currPos;
-        currPos.right = new Item(createID(ownClientId, getState(doc.store, ownClientId)), left, left && left.lastId, right, right && right.id, parent, null, new ContentFormat(key, val));
+        currPos.right = new Item(
+          createID(ownClientId, getState(doc.store, ownClientId)),
+          left,
+          left && left.lastId,
+          right,
+          right && right.id,
+          parent,
+          null,
+          new ContentFormat(key, val)
+        );
         currPos.right.integrate(transaction, 0);
         currPos.forward();
       }
     }
-    return negatedAttributes
+    return negatedAttributes;
   };
 
   /**
@@ -9990,14 +10052,37 @@
     const doc = transaction.doc;
     const ownClientId = doc.clientID;
     minimizeAttributeChanges(currPos, attributes);
-    const negatedAttributes = insertAttributes(transaction, parent, currPos, attributes);
+    const negatedAttributes = insertAttributes(
+      transaction,
+      parent,
+      currPos,
+      attributes
+    );
     // insert content
-    const content = text.constructor === String ? new ContentString(/** @type {string} */ (text)) : (text instanceof AbstractType ? new ContentType(text) : new ContentEmbed(text));
+    const content =
+      text.constructor === String
+        ? new ContentString(/** @type {string} */ (text))
+        : text instanceof AbstractType
+        ? new ContentType(text)
+        : new ContentEmbed(text);
     let { left, right, index } = currPos;
     if (parent._searchMarker) {
-      updateMarkerChanges(parent._searchMarker, currPos.index, content.getLength());
+      updateMarkerChanges(
+        parent._searchMarker,
+        currPos.index,
+        content.getLength()
+      );
     }
-    right = new Item(createID(ownClientId, getState(doc.store, ownClientId)), left, left && left.lastId, right, right && right.id, parent, null, content);
+    right = new Item(
+      createID(ownClientId, getState(doc.store, ownClientId)),
+      left,
+      left && left.lastId,
+      right,
+      right && right.id,
+      parent,
+      null,
+      content
+    );
     right.integrate(transaction, 0);
     currPos.right = right;
     currPos.index = index;
@@ -10020,7 +10105,13 @@
     const doc = transaction.doc;
     const ownClientId = doc.clientID;
     minimizeAttributeChanges(currPos, attributes);
-    const negatedAttributes = insertAttributes(transaction, parent, currPos, attributes);
+    const negatedAttributes = insertAttributes(
+      transaction,
+      parent,
+      currPos,
+      attributes
+    );
+    console.log("negatedAttributes", negatedAttributes);
     // iterate until first non-format or null is found
     // delete all formats with attributes[format.key] != null
     // also check the attributes after the first non-format as we do not want to insert redundant negated attributes there
@@ -10028,17 +10119,19 @@
     iterationLoop: while (
       currPos.right !== null &&
       (length > 0 ||
-        (
-          negatedAttributes.size > 0 &&
-          (currPos.right.deleted || currPos.right.content.constructor === ContentFormat)
-        )
-      )
+        (negatedAttributes.size > 0 &&
+          (currPos.right.deleted ||
+            currPos.right.content.constructor === ContentFormat)))
     ) {
+      console.log("currPos", currPos);
       if (!currPos.right.deleted) {
         switch (currPos.right.content.constructor) {
           case ContentFormat: {
-            const { key, value } = /** @type {ContentFormat} */ (currPos.right.content);
+            const { key, value } = /** @type {ContentFormat} */ (
+              currPos.right.content
+            );
             const attr = attributes[key];
+            console.log("attr", attr);
             if (attr !== undefined) {
               if (equalAttrs(attr, value)) {
                 negatedAttributes.delete(key);
@@ -10046,7 +10139,7 @@
                 if (length === 0) {
                   // no need to further extend negatedAttributes
                   // eslint-disable-next-line no-labels
-                  break iterationLoop
+                  break iterationLoop;
                 }
                 negatedAttributes.set(key, value);
               }
@@ -10054,14 +10147,17 @@
             } else {
               currPos.currentAttributes.set(key, value);
             }
-            break
+            break;
           }
           default:
             if (length < currPos.right.length) {
-              getItemCleanStart(transaction, createID(currPos.right.id.client, currPos.right.id.clock + length));
+              getItemCleanStart(
+                transaction,
+                createID(currPos.right.id.client, currPos.right.id.clock + length)
+              );
             }
             length -= currPos.right.length;
-            break
+            break;
         }
       }
       currPos.forward();
@@ -10070,11 +10166,20 @@
     // ends with a newline. We only insert that newline when a new newline is
     // inserted - i.e when length is bigger than type.length
     if (length > 0) {
-      let newlines = '';
+      let newlines = "";
       for (; length > 0; length--) {
-        newlines += '\n';
+        newlines += "\n";
       }
-      currPos.right = new Item(createID(ownClientId, getState(doc.store, ownClientId)), currPos.left, currPos.left && currPos.left.lastId, currPos.right, currPos.right && currPos.right.id, parent, null, new ContentString(newlines));
+      currPos.right = new Item(
+        createID(ownClientId, getState(doc.store, ownClientId)),
+        currPos.left,
+        currPos.left && currPos.left.lastId,
+        currPos.right,
+        currPos.right && currPos.right.id,
+        parent,
+        null,
+        new ContentString(newlines)
+      );
       currPos.right.integrate(transaction, 0);
       currPos.forward();
     }
@@ -10094,7 +10199,13 @@
    *
    * @function
    */
-  const cleanupFormattingGap = (transaction, start, curr, startAttributes, currAttributes) => {
+  const cleanupFormattingGap = (
+    transaction,
+    start,
+    curr,
+    startAttributes,
+    currAttributes
+  ) => {
     /**
      * @type {Item|null}
      */
@@ -10126,7 +10237,11 @@
               // Either this format is overwritten or it is not necessary because the attribute already existed.
               start.delete(transaction);
               cleanups++;
-              if (!reachedCurr && (currAttributes.get(key) ?? null) === value && startAttrValue !== value) {
+              if (
+                !reachedCurr &&
+                (currAttributes.get(key) ?? null) === value &&
+                startAttrValue !== value
+              ) {
                 if (startAttrValue === null) {
                   currAttributes.delete(key);
                 } else {
@@ -10135,15 +10250,18 @@
               }
             }
             if (!reachedCurr && !start.deleted) {
-              updateCurrentAttributes(currAttributes, /** @type {ContentFormat} */ (content));
+              updateCurrentAttributes(
+                currAttributes,
+                /** @type {ContentFormat} */ (content)
+              );
             }
-            break
+            break;
           }
         }
       }
       start = /** @type {Item} */ (start.right);
     }
-    return cleanups
+    return cleanups;
   };
 
   /**
@@ -10182,9 +10300,9 @@
    * @param {YText} type
    * @return {number} How many formatting attributes have been cleaned up.
    */
-  const cleanupYTextFormatting = type => {
+  const cleanupYTextFormatting = (type) => {
     let res = 0;
-    transact(/** @type {Doc} */ (type.doc), transaction => {
+    transact(/** @type {Doc} */ (type.doc), (transaction) => {
       let start = /** @type {Item} */ (type._start);
       let end = type._start;
       let startAttributes = create$6();
@@ -10193,19 +10311,28 @@
         if (end.deleted === false) {
           switch (end.content.constructor) {
             case ContentFormat:
-              updateCurrentAttributes(currentAttributes, /** @type {ContentFormat} */ (end.content));
-              break
+              updateCurrentAttributes(
+                currentAttributes,
+                /** @type {ContentFormat} */ (end.content)
+              );
+              break;
             default:
-              res += cleanupFormattingGap(transaction, start, end, startAttributes, currentAttributes);
+              res += cleanupFormattingGap(
+                transaction,
+                start,
+                end,
+                startAttributes,
+                currentAttributes
+              );
               startAttributes = copy(currentAttributes);
               start = end;
-              break
+              break;
           }
         }
         end = end.right;
       }
     });
-    return res
+    return res;
   };
 
   /**
@@ -10214,7 +10341,7 @@
    *
    * @param {Transaction} transaction
    */
-  const cleanupYTextAfterTransaction = transaction => {
+  const cleanupYTextAfterTransaction = (transaction) => {
     /**
      * @type {Set<YText>}
      */
@@ -10224,21 +10351,33 @@
     for (const [client, afterClock] of transaction.afterState.entries()) {
       const clock = transaction.beforeState.get(client) || 0;
       if (afterClock === clock) {
-        continue
+        continue;
       }
-      iterateStructs(transaction, /** @type {Array<Item|GC>} */ (doc.store.clients.get(client)), clock, afterClock, item => {
-        if (
-          !item.deleted && /** @type {Item} */ (item).content.constructor === ContentFormat && item.constructor !== GC
-        ) {
-          needFullCleanup.add(/** @type {any} */ (item).parent);
+      iterateStructs(
+        transaction,
+        /** @type {Array<Item|GC>} */ (doc.store.clients.get(client)),
+        clock,
+        afterClock,
+        (item) => {
+          if (
+            !item.deleted &&
+            /** @type {Item} */ (item).content.constructor === ContentFormat &&
+            item.constructor !== GC
+          ) {
+            needFullCleanup.add(/** @type {any} */ (item).parent);
+          }
         }
-      });
+      );
     }
     // cleanup in a new transaction
     transact(doc, (t) => {
-      iterateDeletedStructs(transaction, transaction.deleteSet, item => {
-        if (item instanceof GC || !(/** @type {YText} */ (item.parent)._hasFormatting) || needFullCleanup.has(/** @type {YText} */ (item.parent))) {
-          return
+      iterateDeletedStructs(transaction, transaction.deleteSet, (item) => {
+        if (
+          item instanceof GC ||
+          !(/** @type {YText} */ (item.parent)._hasFormatting) ||
+          needFullCleanup.has(/** @type {YText} */ (item.parent))
+        ) {
+          return;
         }
         const parent = /** @type {YText} */ (item.parent);
         if (item.content.constructor === ContentFormat) {
@@ -10278,23 +10417,38 @@
           case ContentEmbed:
           case ContentString:
             if (length < currPos.right.length) {
-              getItemCleanStart(transaction, createID(currPos.right.id.client, currPos.right.id.clock + length));
+              getItemCleanStart(
+                transaction,
+                createID(currPos.right.id.client, currPos.right.id.clock + length)
+              );
             }
             length -= currPos.right.length;
             currPos.right.delete(transaction);
-            break
+            break;
         }
       }
       currPos.forward();
     }
     if (start) {
-      cleanupFormattingGap(transaction, start, currPos.right, startAttrs, currPos.currentAttributes);
+      cleanupFormattingGap(
+        transaction,
+        start,
+        currPos.right,
+        startAttrs,
+        currPos.currentAttributes
+      );
     }
-    const parent = /** @type {AbstractType<any>} */ (/** @type {Item} */ (currPos.left || currPos.right).parent);
+    const parent = /** @type {AbstractType<any>} */ (
+      /** @type {Item} */ (currPos.left || currPos.right).parent
+    );
     if (parent._searchMarker) {
-      updateMarkerChanges(parent._searchMarker, currPos.index, -startLength + length);
+      updateMarkerChanges(
+        parent._searchMarker,
+        currPos.index,
+        -startLength + length
+      );
     }
-    return currPos
+    return currPos;
   };
 
   /**
@@ -10313,16 +10467,16 @@
    */
 
   /**
-    * Attributes that can be assigned to a selection of text.
-    *
-    * @example
-    *   {
-    *     bold: true,
-    *     font-size: '40px'
-    *   }
-    *
-    * @typedef {Object} TextAttributes
-    */
+   * Attributes that can be assigned to a selection of text.
+   *
+   * @example
+   *   {
+   *     bold: true,
+   *     font-size: '40px'
+   *   }
+   *
+   * @typedef {Object} TextAttributes
+   */
 
   /**
    * @extends YEvent<YText>
@@ -10334,7 +10488,7 @@
      * @param {Transaction} transaction
      * @param {Set<any>} subs The keys that changed
      */
-    constructor (ytext, transaction, subs) {
+    constructor(ytext, transaction, subs) {
       super(ytext, transaction);
       /**
        * Whether the children changed.
@@ -10359,7 +10513,7 @@
     /**
      * @type {{added:Set<Item>,deleted:Set<Item>,keys:Map<string,{action:'add'|'update'|'delete',oldValue:any}>,delta:Array<{insert?:Array<any>|string, delete?:number, retain?:number}>}}
      */
-    get changes () {
+    get changes() {
       if (this._changes === null) {
         /**
          * @type {{added:Set<Item>,deleted:Set<Item>,keys:Map<string,{action:'add'|'update'|'delete',oldValue:any}>,delta:Array<{insert?:Array<any>|string|AbstractType<any>|object, delete?:number, retain?:number}>}}
@@ -10368,11 +10522,11 @@
           keys: this.keys,
           delta: this.delta,
           added: new Set(),
-          deleted: new Set()
+          deleted: new Set(),
         };
         this._changes = changes;
       }
-      return /** @type {any} */ (this._changes)
+      return /** @type {any} */ (this._changes);
     }
 
     /**
@@ -10383,14 +10537,14 @@
      *
      * @public
      */
-    get delta () {
+    get delta() {
       if (this._delta === null) {
         const y = /** @type {Doc} */ (this.target.doc);
         /**
          * @type {Array<{insert?:string|object|AbstractType<any>, delete?:number, retain?:number, attributes?: Object<string,any>}>}
          */
         const delta = [];
-        transact(y, transaction => {
+        transact(y, (transaction) => {
           const currentAttributes = new Map(); // saves all current attributes for insert
           const oldAttributes = new Map();
           let item = this.target._start;
@@ -10405,7 +10559,7 @@
           /**
            * @type {string|object}
            */
-          let insert = '';
+          let insert = "";
           let retain = 0;
           let deleteLen = 0;
           const addOp = () => {
@@ -10415,14 +10569,14 @@
                */
               let op = null;
               switch (action) {
-                case 'delete':
+                case "delete":
                   if (deleteLen > 0) {
                     op = { delete: deleteLen };
                   }
                   deleteLen = 0;
-                  break
-                case 'insert':
-                  if (typeof insert === 'object' || insert.length > 0) {
+                  break;
+                case "insert":
+                  if (typeof insert === "object" || insert.length > 0) {
                     op = { insert };
                     if (currentAttributes.size > 0) {
                       op.attributes = {};
@@ -10433,9 +10587,9 @@
                       });
                     }
                   }
-                  insert = '';
-                  break
-                case 'retain':
+                  insert = "";
+                  break;
+                case "retain":
                   if (retain > 0) {
                     op = { retain };
                     if (!isEmpty(attributes)) {
@@ -10443,7 +10597,7 @@
                     }
                   }
                   retain = 0;
-                  break
+                  break;
               }
               if (op) delta.push(op);
               action = null;
@@ -10456,57 +10610,59 @@
                 if (this.adds(item)) {
                   if (!this.deletes(item)) {
                     addOp();
-                    action = 'insert';
+                    action = "insert";
                     insert = item.content.getContent()[0];
                     addOp();
                   }
                 } else if (this.deletes(item)) {
-                  if (action !== 'delete') {
+                  if (action !== "delete") {
                     addOp();
-                    action = 'delete';
+                    action = "delete";
                   }
                   deleteLen += 1;
                 } else if (!item.deleted) {
-                  if (action !== 'retain') {
+                  if (action !== "retain") {
                     addOp();
-                    action = 'retain';
+                    action = "retain";
                   }
                   retain += 1;
                 }
-                break
+                break;
               case ContentString:
                 if (this.adds(item)) {
                   if (!this.deletes(item)) {
-                    if (action !== 'insert') {
+                    if (action !== "insert") {
                       addOp();
-                      action = 'insert';
+                      action = "insert";
                     }
                     insert += /** @type {ContentString} */ (item.content).str;
                   }
                 } else if (this.deletes(item)) {
-                  if (action !== 'delete') {
+                  if (action !== "delete") {
                     addOp();
-                    action = 'delete';
+                    action = "delete";
                   }
                   deleteLen += item.length;
                 } else if (!item.deleted) {
-                  if (action !== 'retain') {
+                  if (action !== "retain") {
                     addOp();
-                    action = 'retain';
+                    action = "retain";
                   }
                   retain += item.length;
                 }
-                break
+                break;
               case ContentFormat: {
-                const { key, value } = /** @type {ContentFormat} */ (item.content);
+                const { key, value } = /** @type {ContentFormat} */ (
+                  item.content
+                );
                 if (this.adds(item)) {
                   if (!this.deletes(item)) {
                     const curVal = currentAttributes.get(key) ?? null;
                     if (!equalAttrs(curVal, value)) {
-                      if (action === 'retain') {
+                      if (action === "retain") {
                         addOp();
                       }
-                      if (equalAttrs(value, (oldAttributes.get(key) ?? null))) {
+                      if (equalAttrs(value, oldAttributes.get(key) ?? null)) {
                         delete attributes[key];
                       } else {
                         attributes[key] = value;
@@ -10519,7 +10675,7 @@
                   oldAttributes.set(key, value);
                   const curVal = currentAttributes.get(key) ?? null;
                   if (!equalAttrs(curVal, value)) {
-                    if (action === 'retain') {
+                    if (action === "retain") {
                       addOp();
                     }
                     attributes[key] = curVal;
@@ -10529,7 +10685,7 @@
                   const attr = attributes[key];
                   if (attr !== undefined) {
                     if (!equalAttrs(attr, value)) {
-                      if (action === 'retain') {
+                      if (action === "retain") {
                         addOp();
                       }
                       if (value === null) {
@@ -10537,18 +10693,22 @@
                       } else {
                         attributes[key] = value;
                       }
-                    } else if (attr !== null) { // this will be cleaned up automatically by the contextless cleanup function
+                    } else if (attr !== null) {
+                      // this will be cleaned up automatically by the contextless cleanup function
                       item.delete(transaction);
                     }
                   }
                 }
                 if (!item.deleted) {
-                  if (action === 'insert') {
+                  if (action === "insert") {
                     addOp();
                   }
-                  updateCurrentAttributes(currentAttributes, /** @type {ContentFormat} */ (item.content));
+                  updateCurrentAttributes(
+                    currentAttributes,
+                    /** @type {ContentFormat} */ (item.content)
+                  );
                 }
-                break
+                break;
               }
             }
             item = item.right;
@@ -10560,13 +10720,13 @@
               // retain delta's if they don't assign attributes
               delta.pop();
             } else {
-              break
+              break;
             }
           }
         });
         this._delta = delta;
       }
-      return /** @type {any} */ (this._delta)
+      return /** @type {any} */ (this._delta);
     }
   }
 
@@ -10583,7 +10743,7 @@
     /**
      * @param {String} [string] The initial value of the YText.
      */
-    constructor (string) {
+    constructor(string) {
       super();
       /**
        * Array of pending operations on this type
@@ -10606,26 +10766,26 @@
      *
      * @type {number}
      */
-    get length () {
-      return this._length
+    get length() {
+      return this._length;
     }
 
     /**
      * @param {Doc} y
      * @param {Item} item
      */
-    _integrate (y, item) {
+    _integrate(y, item) {
       super._integrate(y, item);
       try {
-        /** @type {Array<function>} */ (this._pending).forEach(f => f());
+        /** @type {Array<function>} */ (this._pending).forEach((f) => f());
       } catch (e) {
         console.error(e);
       }
       this._pending = null;
     }
 
-    _copy () {
-      return new YText()
+    _copy() {
+      return new YText();
     }
 
     /**
@@ -10635,10 +10795,10 @@
      *
      * @return {YText}
      */
-    clone () {
+    clone() {
       const text = new YText();
       text.applyDelta(this.toDelta());
-      return text
+      return text;
     }
 
     /**
@@ -10647,7 +10807,7 @@
      * @param {Transaction} transaction
      * @param {Set<null|string>} parentSubs Keys changed on this type. `null` if list was modified.
      */
-    _callObserver (transaction, parentSubs) {
+    _callObserver(transaction, parentSubs) {
       super._callObserver(transaction, parentSubs);
       const event = new YTextEvent(this, transaction, parentSubs);
       callTypeObservers(this, transaction, event);
@@ -10662,19 +10822,23 @@
      *
      * @public
      */
-    toString () {
-      let str = '';
+    toString() {
+      let str = "";
       /**
        * @type {Item|null}
        */
       let n = this._start;
       while (n !== null) {
-        if (!n.deleted && n.countable && n.content.constructor === ContentString) {
+        if (
+          !n.deleted &&
+          n.countable &&
+          n.content.constructor === ContentString
+        ) {
           str += /** @type {ContentString} */ (n.content).str;
         }
         n = n.right;
       }
-      return str
+      return str;
     }
 
     /**
@@ -10683,8 +10847,8 @@
      * @return {string}
      * @public
      */
-    toJSON () {
-      return this.toString()
+    toJSON() {
+      return this.toString();
     }
 
     /**
@@ -10697,10 +10861,15 @@
      *
      * @public
      */
-    applyDelta (delta, { sanitize = true } = {}) {
+    applyDelta(delta, { sanitize = true } = {}) {
       if (this.doc !== null) {
-        transact(this.doc, transaction => {
-          const currPos = new ItemTextListPosition(null, this._start, 0, new Map());
+        transact(this.doc, (transaction) => {
+          const currPos = new ItemTextListPosition(
+            null,
+            this._start,
+            0,
+            new Map()
+          );
           for (let i = 0; i < delta.length; i++) {
             const op = delta[i];
             if (op.insert !== undefined) {
@@ -10709,19 +10878,34 @@
               // there is a newline at the end of the content.
               // If we omit this step, clients will see a different number of
               // paragraphs, but nothing bad will happen.
-              const ins = (!sanitize && typeof op.insert === 'string' && i === delta.length - 1 && currPos.right === null && op.insert.slice(-1) === '\n') ? op.insert.slice(0, -1) : op.insert;
-              if (typeof ins !== 'string' || ins.length > 0) {
+              const ins =
+                !sanitize &&
+                typeof op.insert === "string" &&
+                i === delta.length - 1 &&
+                currPos.right === null &&
+                op.insert.slice(-1) === "\n"
+                  ? op.insert.slice(0, -1)
+                  : op.insert;
+              if (typeof ins !== "string" || ins.length > 0) {
                 insertText(transaction, this, currPos, ins, op.attributes || {});
               }
             } else if (op.retain !== undefined) {
-              formatText(transaction, this, currPos, op.retain, op.attributes || {});
+              formatText(
+                transaction,
+                this,
+                currPos,
+                op.retain,
+                op.attributes || {}
+              );
             } else if (op.delete !== undefined) {
               deleteText(transaction, currPos, op.delete);
             }
           }
         });
       } else {
-        /** @type {Array<function>} */ (this._pending).push(() => this.applyDelta(delta));
+        /** @type {Array<function>} */ (this._pending).push(() =>
+          this.applyDelta(delta)
+        );
       }
     }
 
@@ -10735,16 +10919,16 @@
      *
      * @public
      */
-    toDelta (snapshot, prevSnapshot, computeYChange) {
+    toDelta(snapshot, prevSnapshot, computeYChange) {
       /**
        * @type{Array<any>}
        */
       const ops = [];
       const currentAttributes = new Map();
       const doc = /** @type {Doc} */ (this.doc);
-      let str = '';
+      let str = "";
       let n = this._start;
-      function packStr () {
+      function packStr() {
         if (str.length > 0) {
           // pack str with attributes to ops
           /**
@@ -10764,31 +10948,55 @@
             op.attributes = attributes;
           }
           ops.push(op);
-          str = '';
+          str = "";
         }
       }
       const computeDelta = () => {
         while (n !== null) {
-          if (isVisible(n, snapshot) || (prevSnapshot !== undefined && isVisible(n, prevSnapshot))) {
+          if (
+            isVisible(n, snapshot) ||
+            (prevSnapshot !== undefined && isVisible(n, prevSnapshot))
+          ) {
             switch (n.content.constructor) {
               case ContentString: {
-                const cur = currentAttributes.get('ychange');
+                const cur = currentAttributes.get("ychange");
                 if (snapshot !== undefined && !isVisible(n, snapshot)) {
-                  if (cur === undefined || cur.user !== n.id.client || cur.type !== 'removed') {
+                  if (
+                    cur === undefined ||
+                    cur.user !== n.id.client ||
+                    cur.type !== "removed"
+                  ) {
                     packStr();
-                    currentAttributes.set('ychange', computeYChange ? computeYChange('removed', n.id) : { type: 'removed' });
+                    currentAttributes.set(
+                      "ychange",
+                      computeYChange
+                        ? computeYChange("removed", n.id)
+                        : { type: "removed" }
+                    );
                   }
-                } else if (prevSnapshot !== undefined && !isVisible(n, prevSnapshot)) {
-                  if (cur === undefined || cur.user !== n.id.client || cur.type !== 'added') {
+                } else if (
+                  prevSnapshot !== undefined &&
+                  !isVisible(n, prevSnapshot)
+                ) {
+                  if (
+                    cur === undefined ||
+                    cur.user !== n.id.client ||
+                    cur.type !== "added"
+                  ) {
                     packStr();
-                    currentAttributes.set('ychange', computeYChange ? computeYChange('added', n.id) : { type: 'added' });
+                    currentAttributes.set(
+                      "ychange",
+                      computeYChange
+                        ? computeYChange("added", n.id)
+                        : { type: "added" }
+                    );
                   }
                 } else if (cur !== undefined) {
                   packStr();
-                  currentAttributes.delete('ychange');
+                  currentAttributes.delete("ychange");
                 }
                 str += /** @type {ContentString} */ (n.content).str;
-                break
+                break;
               }
               case ContentType:
               case ContentEmbed: {
@@ -10797,7 +11005,7 @@
                  * @type {Object<string,any>}
                  */
                 const op = {
-                  insert: n.content.getContent()[0]
+                  insert: n.content.getContent()[0],
                 };
                 if (currentAttributes.size > 0) {
                   const attrs = /** @type {Object<string,any>} */ ({});
@@ -10807,14 +11015,17 @@
                   });
                 }
                 ops.push(op);
-                break
+                break;
               }
               case ContentFormat:
                 if (isVisible(n, snapshot)) {
                   packStr();
-                  updateCurrentAttributes(currentAttributes, /** @type {ContentFormat} */ (n.content));
+                  updateCurrentAttributes(
+                    currentAttributes,
+                    /** @type {ContentFormat} */ (n.content)
+                  );
                 }
-                break
+                break;
             }
           }
           n = n.right;
@@ -10824,19 +11035,23 @@
       if (snapshot || prevSnapshot) {
         // snapshots are merged again after the transaction, so we need to keep the
         // transaction alive until we are done
-        transact(doc, transaction => {
-          if (snapshot) {
-            splitSnapshotAffectedStructs(transaction, snapshot);
-          }
-          if (prevSnapshot) {
-            splitSnapshotAffectedStructs(transaction, prevSnapshot);
-          }
-          computeDelta();
-        }, 'cleanup');
+        transact(
+          doc,
+          (transaction) => {
+            if (snapshot) {
+              splitSnapshotAffectedStructs(transaction, snapshot);
+            }
+            if (prevSnapshot) {
+              splitSnapshotAffectedStructs(transaction, prevSnapshot);
+            }
+            computeDelta();
+          },
+          "cleanup"
+        );
       } else {
         computeDelta();
       }
-      return ops
+      return ops;
     }
 
     /**
@@ -10849,23 +11064,27 @@
      *                                    Text.
      * @public
      */
-    insert (index, text, attributes) {
+    insert(index, text, attributes) {
       if (text.length <= 0) {
-        return
+        return;
       }
       const y = this.doc;
       if (y !== null) {
-        transact(y, transaction => {
+        transact(y, (transaction) => {
           const pos = findPosition(transaction, this, index, !attributes);
           if (!attributes) {
             attributes = {};
             // @ts-ignore
-            pos.currentAttributes.forEach((v, k) => { attributes[k] = v; });
+            pos.currentAttributes.forEach((v, k) => {
+              attributes[k] = v;
+            });
           }
           insertText(transaction, this, pos, text, attributes);
         });
       } else {
-        /** @type {Array<function>} */ (this._pending).push(() => this.insert(index, text, attributes));
+        /** @type {Array<function>} */ (this._pending).push(() =>
+          this.insert(index, text, attributes)
+        );
       }
     }
 
@@ -10879,15 +11098,17 @@
      *
      * @public
      */
-    insertEmbed (index, embed, attributes) {
+    insertEmbed(index, embed, attributes) {
       const y = this.doc;
       if (y !== null) {
-        transact(y, transaction => {
+        transact(y, (transaction) => {
           const pos = findPosition(transaction, this, index, !attributes);
           insertText(transaction, this, pos, embed, attributes || {});
         });
       } else {
-        /** @type {Array<function>} */ (this._pending).push(() => this.insertEmbed(index, embed, attributes || {}));
+        /** @type {Array<function>} */ (this._pending).push(() =>
+          this.insertEmbed(index, embed, attributes || {})
+        );
       }
     }
 
@@ -10899,17 +11120,23 @@
      *
      * @public
      */
-    delete (index, length) {
+    delete(index, length) {
       if (length === 0) {
-        return
+        return;
       }
       const y = this.doc;
       if (y !== null) {
-        transact(y, transaction => {
-          deleteText(transaction, findPosition(transaction, this, index, true), length);
+        transact(y, (transaction) => {
+          deleteText(
+            transaction,
+            findPosition(transaction, this, index, true),
+            length
+          );
         });
       } else {
-        /** @type {Array<function>} */ (this._pending).push(() => this.delete(index, length));
+        /** @type {Array<function>} */ (this._pending).push(() =>
+          this.delete(index, length)
+        );
       }
     }
 
@@ -10923,21 +11150,23 @@
      *
      * @public
      */
-    format (index, length, attributes) {
+    format(index, length, attributes) {
       if (length === 0) {
-        return
+        return;
       }
       const y = this.doc;
       if (y !== null) {
-        transact(y, transaction => {
+        transact(y, (transaction) => {
           const pos = findPosition(transaction, this, index, false);
           if (pos.right === null) {
-            return
+            return;
           }
           formatText(transaction, this, pos, length, attributes);
         });
       } else {
-        /** @type {Array<function>} */ (this._pending).push(() => this.format(index, length, attributes));
+        /** @type {Array<function>} */ (this._pending).push(() =>
+          this.format(index, length, attributes)
+        );
       }
     }
 
@@ -10950,13 +11179,15 @@
      *
      * @public
      */
-    removeAttribute (attributeName) {
+    removeAttribute(attributeName) {
       if (this.doc !== null) {
-        transact(this.doc, transaction => {
+        transact(this.doc, (transaction) => {
           typeMapDelete(transaction, this, attributeName);
         });
       } else {
-        /** @type {Array<function>} */ (this._pending).push(() => this.removeAttribute(attributeName));
+        /** @type {Array<function>} */ (this._pending).push(() =>
+          this.removeAttribute(attributeName)
+        );
       }
     }
 
@@ -10970,13 +11201,15 @@
      *
      * @public
      */
-    setAttribute (attributeName, attributeValue) {
+    setAttribute(attributeName, attributeValue) {
       if (this.doc !== null) {
-        transact(this.doc, transaction => {
+        transact(this.doc, (transaction) => {
           typeMapSet(transaction, this, attributeName, attributeValue);
         });
       } else {
-        /** @type {Array<function>} */ (this._pending).push(() => this.setAttribute(attributeName, attributeValue));
+        /** @type {Array<function>} */ (this._pending).push(() =>
+          this.setAttribute(attributeName, attributeValue)
+        );
       }
     }
 
@@ -10991,8 +11224,8 @@
      *
      * @public
      */
-    getAttribute (attributeName) {
-      return /** @type {any} */ (typeMapGet(this, attributeName))
+    getAttribute(attributeName) {
+      return /** @type {any} */ (typeMapGet(this, attributeName));
     }
 
     /**
@@ -11004,14 +11237,14 @@
      *
      * @public
      */
-    getAttributes () {
-      return typeMapGetAll(this)
+    getAttributes() {
+      return typeMapGetAll(this);
     }
 
     /**
      * @param {UpdateEncoderV1 | UpdateEncoderV2} encoder
      */
-    _write (encoder) {
+    _write(encoder) {
       encoder.writeTypeRef(YTextRefID);
     }
   }
@@ -11023,7 +11256,7 @@
    * @private
    * @function
    */
-  const readYText = _decoder => new YText();
+  const readYText = (_decoder) => new YText();
 
   /**
    * @module YXml

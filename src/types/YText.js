@@ -389,6 +389,7 @@ const formatText = (transaction, parent, currPos, length, attributes) => {
     currPos,
     attributes
   );
+  console.log("negatedAttributes", negatedAttributes);
   // iterate until first non-format or null is found
   // delete all formats with attributes[format.key] != null
   // also check the attributes after the first non-format as we do not want to insert redundant negated attributes there
@@ -400,6 +401,7 @@ const formatText = (transaction, parent, currPos, length, attributes) => {
         (currPos.right.deleted ||
           currPos.right.content.constructor === ContentFormat)))
   ) {
+    console.log("currPos", currPos);
     if (!currPos.right.deleted) {
       switch (currPos.right.content.constructor) {
         case ContentFormat: {
@@ -407,6 +409,7 @@ const formatText = (transaction, parent, currPos, length, attributes) => {
             currPos.right.content
           );
           const attr = attributes[key];
+          console.log("attr", attr);
           if (attr !== undefined) {
             if (equalAttrs(attr, value)) {
               negatedAttributes.delete(key);
